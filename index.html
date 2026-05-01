@@ -59,12 +59,50 @@
     </main>
 
     <script>
-        // СЮДА МЫ ВСТАВИМ КЛЮЧИ SUPABASE, КОГДА НАЙДЕМ
-        const SUPABASE_URL = 'https://utpozwhjvzhsonbkemlq.supabase.co'
-        const SUPABASE_KEY = 'sb_publishable_uiOs8EoSqyydQxiV3WSbrQ_pYCVXJJ6'
-        
-        // Эта строчка запускает "мозги" приложения
-        // const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+        const supabaseUrl = 'https://utpozwhjvzhsonbkemlq.supabase.co'
+        const supabaseKey = 'sb_publishable_uiOs8EoSqyydQxiV3WSbrQ_pYCVXJJ6'
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+
+        // Функция входа
+        async function handleLogin() {
+            const email = document.getElementById('emailInput').value
+            const { error } = await supabase.auth.signInWithOtp({ email })
+            if (error) alert(error.message)
+            else alert('Ссылка для входа отправлена на почту!')
+        }
+
+        // ФУНКЦИЯ ИЗМЕНЕНИЯ ИМЕНИ
+        async function updateNickname() {
+            const newName = prompt("Как тебя называть в Nova Space?")
+            if (!newName) return
+
+            const { data, error } = await supabase.auth.updateUser({
+                data: { display_name: newName }
+            })
+
+            if (error) alert("Ошибка: " + error.message)
+            else {
+                alert("Имя изменено на: " + newName)
+                location.reload() // Перезагрузим, чтобы имя обновилось везде
+            }
+        }
+
+        // Следим за входом пользователя
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            if (session) {
+                document.getElementById('authScreen').classList.add('hidden')
+                document.getElementById('chatScreen').classList.remove('hidden')
+                
+                // Берем имя из данных пользователя
+                const userName = session.user.user_metadata.display_name || "Новичок Nova"
+                document.getElementById('userStatus').innerText = userName.toUpperCase()
+                
+                // Если имени еще нет — попросим ввести
+                if (!session.user.user_metadata.display_name) {
+                    updateNickname()
+                }
+            }
+        })
     </script>
 </body>
 </html>
